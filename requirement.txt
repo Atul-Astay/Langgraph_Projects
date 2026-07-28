@@ -1,0 +1,10 @@
+ipykernel
+python-dotenv
+langgraph
+langchain
+langchain-core
+langchain-google-genai
+langchain-google-vertexai
+typing_extensions
+fastapi 
+uvicorn

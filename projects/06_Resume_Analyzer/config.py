@@ -1,0 +1,5 @@
+MAX_ITERATIONS = 3
+
+TARGET_ATS_SCORE = 80
+
+MODEL_NAME = "gemini-2.5-flash"
