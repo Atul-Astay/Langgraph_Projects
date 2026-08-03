@@ -3,8 +3,12 @@ python-dotenv
 langgraph
 langchain
 langchain-core
+langchain-groq
 langchain-google-genai
 langchain-google-vertexai
 typing_extensions
 fastapi 
 uvicorn
+sqlalchemy
+langgraph-checkpoint-sqlite
+aiosqlite
