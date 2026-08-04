@@ -1,9 +1,17 @@
 from langchain_core.messages import SystemMessage
-
 from langchain_groq import ChatGroq
-from dotenv import load_dotenv
-from .state import FitnessState
+
 from .prompts import SYSTEM_PROMPT
+from .state import FitnessState
+from .tools import (
+    beginner_workout,
+    calculate_bmi,
+    calculate_calories,
+    protein_requirement,
+    water_requirement,
+)
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -12,18 +20,31 @@ llm = ChatGroq(
     temperature=0.3,
 )
 
+tools = [
+    calculate_bmi,
+    calculate_calories,
+    protein_requirement,
+    water_requirement,
+    beginner_workout,
+]
 
-def fitness_coach(state: FitnessState) -> FitnessState:
-    """
-    Main AI node.
-    """
+llm_with_tools = llm.bind_tools(tools)
+
+
+def fitness_coach(state: FitnessState):
+
+    profile = state.get("profile", "")
 
     messages = [
-        SystemMessage(content=SYSTEM_PROMPT),
+        SystemMessage(
+            content=SYSTEM_PROMPT
+            + "\n\nUser Profile:\n"
+            + profile
+        ),
         *state["messages"],
     ]
 
-    response = llm.invoke(messages)
+    response = llm_with_tools.invoke(messages)
 
     return {
         "messages": [response]

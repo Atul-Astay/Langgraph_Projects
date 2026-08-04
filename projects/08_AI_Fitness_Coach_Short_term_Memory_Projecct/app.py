@@ -1,42 +1,56 @@
 from fastapi import FastAPI
 from langchain_core.messages import HumanMessage
 
-from graph.builder import graph
-from database.database import Base, engine
+from database.database import Base, SessionLocal, engine
+from database.crud import get_or_create_user
 
-app = FastAPI(title="AI Fitness Coach")
+from graph.builder import graph
+from schemas.request import ChatRequest
+from services.coach import profile_to_text, save_profile
 
 Base.metadata.create_all(bind=engine)
 
-@app.get("/")
-async def home():
-    return {
-        "message": "AI Fitness Coach Running 🚀"
-    }
+app = FastAPI()
 
 
-@app.get("/chat")
-async def chat(
-    thread_id: str,
-    message: str,
-):
+@app.post("/chat")
+async def chat(request: ChatRequest):
 
-    config = {
-        "configurable": {
-            "thread_id": thread_id
+    db = SessionLocal()
+
+    try:
+        save_profile(
+            db,
+            request.user_id,
+            request.message,
+        )
+
+        user = get_or_create_user(
+            db,
+            request.user_id,
+        )
+
+        profile = profile_to_text(user)
+
+        config = {
+            "configurable": {
+                "thread_id": request.thread_id
+            }
         }
-    }
 
-    result = graph.invoke(
-        {
-            "messages": [
-                HumanMessage(content=message)
-            ]
-        },
-        config=config,
-    )
+        result = graph.invoke(
+            {
+                "messages": [
+                    HumanMessage(content=request.message)
+                ],
+                "profile": profile,
+            },
+            config=config,
+        )
 
-    return {
-        "thread_id": thread_id,
-        "response": result["messages"][-1].content
-    }
+        return {
+            "response": result["messages"][-1].content
+        }
+
+    finally:
+        db.close()

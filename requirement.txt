@@ -3,6 +3,7 @@ python-dotenv
 langgraph
 langchain
 langchain-core
+langchain-community
 langchain-groq
 langchain-google-genai
 langchain-google-vertexai
