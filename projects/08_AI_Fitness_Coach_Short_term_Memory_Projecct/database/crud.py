@@ -45,4 +45,21 @@ def update_user(
     db.commit()
     db.refresh(user)
 
+    return user 
+
+def update_profile_from_schema(
+    db,
+    user,
+    profile,
+):
+
+    data = profile.model_dump(exclude_none=True)
+
+    for key, value in data.items():
+        setattr(user, key, value)
+
+    db.commit()
+
+    db.refresh(user)
+
     return user

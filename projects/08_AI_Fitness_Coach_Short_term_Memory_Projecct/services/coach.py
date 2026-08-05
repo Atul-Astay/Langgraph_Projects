@@ -1,46 +1,64 @@
-import re
+from database.crud import (
+    get_or_create_user,
+    update_profile_from_schema,
+)
 
-from sqlalchemy.orm import Session
 
-from database.crud import get_or_create_user, update_user
+def save_profile(db, user_id: str, profile):
+    """
+    Save the extracted profile into the database.
 
+    Parameters
+    ----------
+    db : SQLAlchemy Session
+    user_id : str
+        Unique user identifier.
+    profile : UserProfileSchema
+        Structured profile extracted by the LLM.
+    """
 
-def save_profile(db: Session, user_id: str, message: str):
+    if profile is None:
+        return
 
     user = get_or_create_user(db, user_id)
 
-    name = re.search(r"my name is (\w+)", message, re.I)
-    weight = re.search(r"(\d+)\s*kg", message, re.I)
-    age = re.search(r"i am (\d+)", message, re.I)
-
-    goal = None
-
-    if "fat loss" in message.lower():
-        goal = "Fat Loss"
-
-    elif "weight loss" in message.lower():
-        goal = "Weight Loss"
-
-    elif "muscle gain" in message.lower():
-        goal = "Muscle Gain"
-
-    update_user(
-        db,
-        user,
-        name=name.group(1) if name else None,
-        age=int(age.group(1)) if age else None,
-        weight=float(weight.group(1)) if weight else None,
-        goal=goal,
+    update_profile_from_schema(
+        db=db,
+        user=user,
+        profile=profile,
     )
 
 
-def profile_to_text(user):
+def profile_to_text(user) -> str:
+    """
+    Convert the stored profile into text that can be injected
+    into the system prompt for personalization.
+    """
 
-    return f"""
-Name: {user.name}
-Age: {user.age}
-Height: {user.height}
-Weight: {user.weight}
-Goal: {user.goal}
-Level: {user.level}
-"""
+    if user is None:
+        return "No profile available."
+
+    profile_lines = []
+
+    if user.name:
+        profile_lines.append(f"Name: {user.name}")
+
+    if user.age is not None:
+        profile_lines.append(f"Age: {user.age}")
+
+    if user.height is not None:
+        profile_lines.append(f"Height: {user.height} cm")
+
+    if user.weight is not None:
+        profile_lines.append(f"Weight: {user.weight} kg")
+
+    if user.goal:
+        profile_lines.append(f"Goal: {user.goal}")
+
+    if user.level:
+        profile_lines.append(f"Fitness Level: {user.level}")
+
+    if not profile_lines:
+        return "No profile available."
+
+    return "\n".join(profile_lines)

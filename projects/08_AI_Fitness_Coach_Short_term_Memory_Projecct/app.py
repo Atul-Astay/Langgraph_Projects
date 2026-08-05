@@ -39,14 +39,17 @@ async def chat(request: ChatRequest):
         }
 
         result = graph.invoke(
-            {
-                "messages": [
-                    HumanMessage(content=request.message)
-                ],
-                "profile": profile,
-            },
-            config=config,
-        )
+    {
+        "user_id": request.user_id,
+        "messages": [
+            HumanMessage(
+                content=request.message
+            )
+        ],
+        "profile": profile,
+    },
+    config=config,
+)
 
         return {
             "response": result["messages"][-1].content
